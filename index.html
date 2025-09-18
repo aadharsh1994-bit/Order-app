@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shop Order App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h2>Order for Supplier:</h2>
+  <select id="supplierSelect" onchange="loadItems()">
+    <option value="acsc">ACSC</option>
+    <option value="cmp12">CMP12</option>
+    <option value="mcc">MCC</option>
+  </select>
+
+  <div id="itemList"></div>
+
+  <button id="sendBtn" onclick="copyOrder()">Send Order</button>
+
+  <script>
+    let items = [];
+
+    function loadItems() {
+      const supplier = document.getElementById('supplierSelect').value;
+      fetch(`${supplier}.json`)
+        .then(res => res.json())
+        .then(data => {
+          items = data;
+          renderItems();
+        });
+    }
+
+    function renderItems() {
+      const container = document.getElementById('itemList');
+      container.innerHTML = '';
+      items.forEach((item, index) => {
+        container.innerHTML += `
+          <div class="item-row">
+            <div class="item-name">${item.item} (${item.primaryUnit} / ${item.secondaryUnit})</div>
+            <div class="qty-controls">
+              <button onclick="changeQty(${index}, -1)">−</button>
+              <input type="text" id="qty-${index}" value="0">
+              <button onclick="changeQty(${index}, 1)">+</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function changeQty(index, delta) {
+      const input = document.getElementById(`qty-${index}`);
+      let val = parseInt(input.value) || 0;
+      input.value = Math.max(0, val + delta);
+    }
+
+    function copyOrder() {
+      const supplier = document.getElementById('supplierSelect').value.toUpperCase();
+      let summary = `Order for ${supplier}:\n`;
+      items.forEach((item, index) => {
+        const qty = document.getElementById(`qty-${index}`).value;
+        if (qty > 0) {
+          summary += `- ${item.item}: ${qty} ${item.primaryUnit}\n`;
+        }
+      });
+      navigator.clipboard.writeText(summary).then(() => {
+        alert("Order copied to clipboard! Paste it in WhatsApp.");
+      });
+    }
+
+    window.onload = loadItems;
+  </script>
+
+</body>
+</html>
